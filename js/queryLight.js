@@ -4,7 +4,7 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.0
+ * Version: 1.0.1
  * File Version: 1.0.0
 */
 
@@ -41,6 +41,7 @@ function qL( input ) {
     /** Основные геттеры */
     get scrollTop() { return window.pageYOffset },
     get offsetTop() { this.__aloneRequire(); return this.get().offsetTop },
+    get text() { this.__aloneRequire(); return this.get().innerText },
     get len() { return this.elements.length },
 
 
@@ -58,16 +59,23 @@ function qL( input ) {
 
 
 
+  if ( qL.elements.length === 0 ) return null;
+
+
+
   /** Вернем обертку над элементами */
   return new Proxy( qL, {
     get( target, prop, receiver ) {
-      return Reflect.get(
-        prop in target
-          ? target
-          : target.elements,
-        prop,
-        receiver
-      );
+      if ( !( prop in target ) ) {
+        target.__aloneRequire();
+        target = target.get();
+        let gotten = Reflect.get( target, prop );
+
+        if ( typeof gotten === 'function' ) return gotten.bind( target );
+        else return gotten;
+      }
+
+      return Reflect.get( target, prop, receiver );
     }
   } )
 
