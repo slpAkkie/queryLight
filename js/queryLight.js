@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.1
- * File Version: 1.0.0
+ * File Version: 1.0.1
 */
 
 
@@ -16,12 +16,13 @@
  * queryLight
  *
  * @param {string|Element} input Строка css селектора или DOM элемент
+ * @param {Element} parent Элемент внутри которого будет производиться поиск. По умолчанию document
  *
  * @returns {Proxy} Обертка вокруг элементов
  */
-function qL( input ) {
+function qL( input, parent = null ) {
 
-  if ( typeof input === 'function' ) { document.addEventListener( 'DOMContentLoaded', input ); return; }
+  if ( typeof input === 'function' ) { _( document ).on( 'DOMContentLoaded', input ); return; }
 
 
 
@@ -52,8 +53,13 @@ function qL( input ) {
 
 
 
-  /** Проверка на входной параметр */
-  if ( typeof input === 'string' ) qL.elements = Array.from( document.querySelectorAll( input ) );
+  /** Проверка на входные параметры */
+  if ( !( parent instanceof Element ) ) {
+    if ( parent !== null ) throw new Error( 'Родительский элемент не был DOM элементом. Если вы использовали элемент, взятый с помощью qL убедитесь что получили конкретный DOM элемент' );
+    parent = document;
+  }
+
+  if ( typeof input === 'string' ) qL.elements = Array.from( parent.querySelectorAll( input ) );
   else if ( input instanceof Element || window instanceof Window ) qL.elements = [ input ];
   else return null;
 
