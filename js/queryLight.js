@@ -4,8 +4,8 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.1
- * File Version: 1.0.1
+ * Version: 1.0.2
+ * File Version: 1.0.2
 */
 
 
@@ -37,13 +37,27 @@ function qL( input, parent = null ) {
     hasClass( classString ) { return this.elements.some( el => el.classList.contains( classString ) ) },
     on( eventName, callback ) { this.each( el => el.addEventListener( eventName, callback ) ); return this },
     each( callback ) { this.elements.forEach( el => callback.call( el, el ) ); return this },
+    insertBefore( sibling ) {
+      this.parent.insertBefore( sibling, this.get() );
+
+      return sibling
+    },
+    insertAfter( sibling ) {
+      let nextSibling = this.nextSibling;
+      nextSibling
+        ? this.parent.insertBefore( sibling, this.nextSibling )
+        : this.parent.appendChild( sibling );
+
+      return sibling
+    },
     get( index = null ) { return index === null ? this.elements[ 0 ] : this.elements[ index ] },
 
     /** Основные геттеры */
     get scrollTop() { return window.pageYOffset },
-    get offsetTop() { this.__aloneRequire(); return this.get().offsetTop },
-    get text() { this.__aloneRequire(); return this.get().innerText },
+    get topOffset() { this.__aloneRequire(); return this.offsetTop },
+    get text() { this.__aloneRequire(); return this.innerText },
     get len() { return this.elements.length },
+    get parent() { this.__aloneRequire(); return this.parentElement },
 
 
 
