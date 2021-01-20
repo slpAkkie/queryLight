@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.5
- * File Version: 1.0.3
+ * File Version: 1.0.4
 */
 
 
@@ -31,7 +31,7 @@ function qL( input, parent = null ) {
    */
   let queryLight = new Object( {
     /** Поле идентификации того, что это Проксированный элемент */
-    qL: this,
+    qL: true,
     _( input ) { return qL( input, this ) },
 
     /** Основные функции */
@@ -89,12 +89,11 @@ function qL( input, parent = null ) {
     parent = document;
   }
 
+  if ( input && input.qL === true ) return input;
+
   if ( typeof input === 'string' ) queryLight.elements = Array.from( parent.querySelectorAll( input ) );
-  else if ( input instanceof Element || window instanceof Window ) queryLight.elements = [ input ];
+  else if ( input instanceof Element || input instanceof Window ) queryLight.elements = [ input ];
   else return null;
-
-
-
   if ( queryLight.len() === 0 ) return null;
 
 
