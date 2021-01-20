@@ -4,7 +4,7 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.4
+ * Version: 1.0.5
  * File Version: 1.0.3
 */
 
@@ -40,7 +40,7 @@ function qL( input, parent = null ) {
     toggleClass( classString ) { this.each( el => _( el ).hasClass( classString ) ? _( el ).removeClass( classString ) : _( el ).addClass( classString ) ) },
     hasClass( classString ) { return this.elements.some( el => el.classList.contains( classString ) ) },
     on( eventName, callback ) { this.each( el => el.addEventListener( eventName, callback ) ); return this },
-    each( callback ) { this.elements.forEach( el => callback.call( el, el ) ); return this },
+    each( callback ) { this.elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
     insertBefore( sibling ) {
       this.parent.insertBefore( sibling, this.get() );
 
@@ -56,12 +56,12 @@ function qL( input, parent = null ) {
     },
     insertLast( child ) {
       child.qL
-        ? this.each( el => child.each( ch => el.appendChild( ch ) ) )
-        : this.each( el => el.appendChild( child ) );
+        ? this.each( el => child.each( ch => el.insertLast( ch.get() ) ) )
+        : this.each( el => el.appendChild( child.cloneNode( true ) ) );
 
-      return child.qL ? child : qL( child )
+      return this
     },
-    get( index = null ) { return index === null ? this.elements[ 0 ] : this.elements[ index ] },
+    get( index = null, as_qL = false ) { let el = ( index === null ) ? this.elements[ 0 ] : this.elements[ index ]; return as_qL ? qL( el ) : el },
 
     /** Основные геттеры */
     scrollTop() { return window.pageYOffset },
