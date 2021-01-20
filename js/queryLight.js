@@ -4,8 +4,8 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.3
- * File Version: 1.0.5
+ * Version: 1.0.3.1
+ * File Version: 1.0.6
 */
 
 
@@ -92,7 +92,7 @@ function qL( input, parent = null ) {
   if ( input && input.qL === true ) return input;
 
   if ( typeof input === 'string' ) queryLight.elements = Array.from( parent.querySelectorAll( input ) );
-  else if ( input instanceof Element || input instanceof Window ) queryLight.elements = [ input ];
+  else if ( input instanceof Element || input instanceof Window || input instanceof Document ) queryLight.elements = [ input ];
   else return null;
   if ( queryLight.len() === 0 ) return null;
 
