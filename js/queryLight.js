@@ -4,8 +4,8 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.3
- * File Version: 1.0.2
+ * Version: 1.0.4
+ * File Version: 1.0.3
 */
 
 
@@ -27,9 +27,13 @@ function qL( input, parent = null ) {
 
 
   /**
-   * @var {Object} qL Объект queryLight
+   * @var {Object} queryLight Объект queryLight
    */
-  let qL = new Object( {
+  let queryLight = new Object( {
+    /** Поле идентификации того, что это Проксированный элемент */
+    qL: this,
+    _( input ) { return qL( input, this ) },
+
     /** Основные функции */
     addClass( classString ) { this.each( el => el.classList.add( classString ) ); return this },
     removeClass( classString ) { this.each( el => el.classList.remove( classString ) ); return this },
@@ -50,41 +54,53 @@ function qL( input, parent = null ) {
 
       return sibling
     },
+    insertLast( child ) {
+      child.qL
+        ? this.each( el => child.each( ch => el.appendChild( ch ) ) )
+        : this.each( el => el.appendChild( child ) );
+
+      return child.qL ? child : qL( child )
+    },
     get( index = null ) { return index === null ? this.elements[ 0 ] : this.elements[ index ] },
 
     /** Основные геттеры */
     scrollTop() { return window.pageYOffset },
-    topOffset() { this.__aloneRequire(); return this.offsetTop },
-    text( value = null ) { this.__aloneRequire(); value !== null && ( this.innerText = value ); return this.innerText },
+    topOffset() { return this.offsetTop },
+    text( value = null ) {
+      if ( value !== null ) this.each( el => el.innerText = value );
+
+      return value || this.innerText;
+    },
     len() { return this.elements.length },
-    parent() { this.__aloneRequire(); return this.parentElement },
+    parent() { return this.parentElement },
 
 
 
     /** Служебные функции */
-    __aloneRequire() { if ( this.len > 1 ) throw new Error( `Коллекция состоит из ${this.len} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true }
+    __aloneRequire() { if ( this.len() > 1 ) throw new Error( `Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true }
   } );
 
 
 
   /** Проверка на входные параметры */
-  if ( !( parent instanceof Element ) ) {
+  if ( parent && parent.qL && parent.__aloneRequire() ) parent = parent.get();
+  else if ( !( parent instanceof Element ) ) {
     if ( parent !== null ) throw new Error( 'Родительский элемент не был DOM элементом. Если вы использовали элемент, взятый с помощью qL убедитесь что получили конкретный DOM элемент' );
     parent = document;
   }
 
-  if ( typeof input === 'string' ) qL.elements = Array.from( parent.querySelectorAll( input ) );
-  else if ( input instanceof Element || window instanceof Window ) qL.elements = [ input ];
+  if ( typeof input === 'string' ) queryLight.elements = Array.from( parent.querySelectorAll( input ) );
+  else if ( input instanceof Element || window instanceof Window ) queryLight.elements = [ input ];
   else return null;
 
 
 
-  if ( qL.elements.length === 0 ) return null;
+  if ( queryLight.len() === 0 ) return null;
 
 
 
   /** Вернем обертку над элементами */
-  return new Proxy( qL, {
+  return new Proxy( queryLight, {
     get( target, prop, receiver ) {
       if ( !( prop in target ) ) {
         target.__aloneRequire();
