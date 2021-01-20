@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.3.1
- * File Version: 1.0.6
+ * File Version: 1.0.7
 */
 
 
@@ -54,12 +54,19 @@ function qL( input, parent = null ) {
 
       return sibling
     },
-    insertLast( child ) {
-      child.qL
-        ? this.each( el => child.each( ch => el.insertLast( ch.get() ) ) )
-        : this.each( el => el.appendChild( child.cloneNode( true ) ) );
+    insertLast( child, multiInsert = false ) {
+      !child.qL && ( child = _( child ) );
 
-      return this
+      if ( multiInsert ) {
+        this.each( el => child.each( ch => el.appendChild( ch.get().cloneNode( true ) ) ) );
+
+        return this
+      } else {
+        this.__aloneRequire();
+        child.each( ch => this.appendChild( ch.get() ) );
+
+        return child
+      }
     },
     get( index = null, as_qL = false ) { let el = ( index === null ) ? this.elements[ 0 ] : this.elements[ index ]; return as_qL ? qL( el ) : el },
 
