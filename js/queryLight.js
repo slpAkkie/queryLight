@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.3.1
- * File Version: 1.0.8
+ * File Version: 1.0.9
 */
 
 
@@ -54,7 +54,7 @@ function qL( input, parent = null ) {
 
       return sibling
     },
-    insertLast( child, multiInsert = false ) {
+    insert( child, multiInsert = false ) {
       !child.qL && ( child = _( child ) );
 
       if ( multiInsert ) {
