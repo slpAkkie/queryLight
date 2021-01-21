@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.3.1
- * File Version: 1.0.9
+ * File Version: 1.0.10
 */
 
 
@@ -39,7 +39,11 @@ function qL( input, parent = null ) {
     removeClass( classString ) { this.each( el => el.classList.remove( classString ) ); return this },
     toggleClass( classString ) { this.each( el => _( el ).hasClass( classString ) ? _( el ).removeClass( classString ) : _( el ).addClass( classString ) ) },
     hasClass( classString ) { return this.__elements.some( el => el.classList.contains( classString ) ) },
-    on( eventName, callback ) { this.each( el => el.addEventListener( eventName, callback ) ); return this },
+    on( eventName, callback ) {
+      this.each( function ( el ) { el.addEventListener( eventName, callback.bind( _( this ) ) ) } );
+
+      return this
+    },
     each( callback ) { this.__elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
     insertBefore( sibling ) {
       this.parent.insertBefore( sibling, this.get() );
@@ -67,6 +71,11 @@ function qL( input, parent = null ) {
 
         return child
       }
+    },
+    clear() {
+      this.each( el => el.innerHTML = '' );
+
+      return this
     },
     get( index = null, as_qL = false ) { let el = ( index === null ) ? this.__elements[ 0 ] : this.__elements[ index ]; return as_qL ? qL( el ) : el },
 
