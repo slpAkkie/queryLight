@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.3.1
- * File Version: 1.0.7
+ * File Version: 1.0.8
 */
 
 
@@ -38,9 +38,9 @@ function qL( input, parent = null ) {
     addClass( classString ) { this.each( el => el.classList.add( classString ) ); return this },
     removeClass( classString ) { this.each( el => el.classList.remove( classString ) ); return this },
     toggleClass( classString ) { this.each( el => _( el ).hasClass( classString ) ? _( el ).removeClass( classString ) : _( el ).addClass( classString ) ) },
-    hasClass( classString ) { return this.elements.some( el => el.classList.contains( classString ) ) },
+    hasClass( classString ) { return this.__elements.some( el => el.classList.contains( classString ) ) },
     on( eventName, callback ) { this.each( el => el.addEventListener( eventName, callback ) ); return this },
-    each( callback ) { this.elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
+    each( callback ) { this.__elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
     insertBefore( sibling ) {
       this.parent.insertBefore( sibling, this.get() );
 
@@ -68,7 +68,7 @@ function qL( input, parent = null ) {
         return child
       }
     },
-    get( index = null, as_qL = false ) { let el = ( index === null ) ? this.elements[ 0 ] : this.elements[ index ]; return as_qL ? qL( el ) : el },
+    get( index = null, as_qL = false ) { let el = ( index === null ) ? this.__elements[ 0 ] : this.__elements[ index ]; return as_qL ? qL( el ) : el },
 
     /** Основные геттеры */
     scrollTop() { return window.pageYOffset },
@@ -78,13 +78,41 @@ function qL( input, parent = null ) {
 
       return value || this.innerText;
     },
-    len() { return this.elements.length },
+    len() { return this.__elements.length },
     parent() { return this.parentElement },
+    prev() { return this.previousElementSibling },
+    elements() {
+      this.__aloneRequire();
+
+      const form = this.get();
+      let elements = null;
+
+      for ( let key in form.elements )
+        if ( form.elements.hasOwnProperty( key ) && Number.isNaN( parseInt( key ) ) )
+          elements ? elements.__push( form.elements[ key ] ) : ( elements = _( form.elements[ key ] ) );
+
+      return elements;
+    },
+    formData( withGETQuery = false ) {
+      let formsData = new Array();
+
+      this.each( form => {
+        if ( !( form.get() instanceof HTMLFormElement ) ) throw new Error( 'Один или более элементов не были формой' );
+
+        let formData = new Object();
+        form.elements().each( el => formData[ el.name ] = el.value );
+        formsData.push( formData );
+      } );
+
+      if ( withGETQuery && this.__aloneRequire() ) return { GETQuery: GETQueryFrom( formsData[ 0 ] ), formData: formsData[ 0 ] };
+      return formsData.length > 1 ? formsData : ( formsData.length === 1 ? formsData[ 0 ] : null );
+    },
 
 
 
     /** Служебные функции */
-    __aloneRequire() { if ( this.len() > 1 ) throw new Error( `Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true }
+    __aloneRequire() { if ( this.len() > 1 ) throw new Error( `Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true },
+    __push( element ) { element instanceof Element && this.__elements.push( element ); return this },
   } );
 
 
@@ -98,8 +126,8 @@ function qL( input, parent = null ) {
 
   if ( input && input.qL === true ) return input;
 
-  if ( typeof input === 'string' ) queryLight.elements = Array.from( parent.querySelectorAll( input ) );
-  else if ( input instanceof Element || input instanceof Window || input instanceof Document ) queryLight.elements = [ input ];
+  if ( typeof input === 'string' ) queryLight.__elements = Array.from( parent.querySelectorAll( input ) );
+  else if ( input instanceof Element || input instanceof Window || input instanceof Document ) queryLight.__elements = [ input ];
   else return null;
   if ( queryLight.len() === 0 ) return null;
 
