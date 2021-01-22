@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.3.1
- * File Version: 1.0.10
+ * File Version: 1.0.11
 */
 
 
@@ -46,7 +46,14 @@ function qL( input, parent = null ) {
     },
     each( callback ) { this.__elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
     insertBefore( sibling ) {
-      this.parent.insertBefore( sibling, this.get() );
+      this.__aloneRequire();
+
+      if ( sibling.qL ) {
+        let parent = this.parent().get();
+
+        sibling.each( ch => parent.insertBefore( ch.get(), this.get() ) );
+      } else
+        this.parent().get().insertBefore( sibling, this.get() );
 
       return sibling
     },
@@ -72,6 +79,7 @@ function qL( input, parent = null ) {
         return child
       }
     },
+    replace( newElement ) { this.replaceWith( newElement.qL ? newElement.get() : newElement ); return newElement },
     clear() {
       this.each( el => el.innerHTML = '' );
 
@@ -88,8 +96,20 @@ function qL( input, parent = null ) {
       return value || this.innerText;
     },
     len() { return this.__elements.length },
-    parent() { return this.parentElement },
-    prev() { return this.previousElementSibling },
+    parent( selector = null ) {
+      if ( !selector ) return _( this.parentElement );
+
+      this.__aloneRequire();
+      let parent = this.parent();
+      while ( !parent.matches( selector ) ) {
+        if ( parent.matches( ':root' ) ) return null;
+
+        parent = parent.parent();
+      }
+
+      return parent;
+    },
+    prev() { return _( this.previousElementSibling ) },
     elements() {
       this.__aloneRequire();
 
@@ -121,7 +141,11 @@ function qL( input, parent = null ) {
 
     /** Служебные функции */
     __aloneRequire() { if ( this.len() > 1 ) throw new Error( `Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true },
-    __push( element ) { element instanceof Element && this.__elements.push( element ); return this },
+    __push( element ) {
+      ( element instanceof Element || element.qL )
+        && this.__elements.push( element.qL ? element.get() : element );
+      return this
+    },
   } );
 
 
