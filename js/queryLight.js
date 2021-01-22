@@ -4,7 +4,7 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.3.1
+ * Version: 1.0.4
  * File Version: 1.0.12
 */
 
