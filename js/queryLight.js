@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.4
- * File Version: 1.0.12
+ * File Version: 1.0.13
 */
 
 
@@ -44,7 +44,7 @@ function qL( input, parent = null ) {
 
       return this
     },
-    each( callback ) { this.__elements.forEach( el => callback.call( _( el ), _( el ) ) ); return this },
+    each( callback ) { this.__elements.forEach( ( el, i ) => callback.call( _( el ), _( el ), i ) ); return this },
     insertBefore( sibling ) {
       this.__aloneRequire();
 
@@ -58,10 +58,10 @@ function qL( input, parent = null ) {
       return sibling
     },
     insertAfter( sibling ) {
-      let nextSibling = this.nextSibling;
+      let nextSibling = _( this.nextElementSibling );
       nextSibling
-        ? this.parent.insertBefore( sibling, this.nextSibling )
-        : this.parent.appendChild( sibling );
+        ? nextSibling.insertBefore( sibling )
+        : this.parent().insert( sibling );
 
       return sibling
     },
@@ -109,6 +109,11 @@ function qL( input, parent = null ) {
 
       return value || this.innerText;
     },
+    val( val = null ) {
+      val && ( this.value = val );
+
+      return this.value;
+    },
     len() { return this.__elements.length },
     parent( selector = null ) {
       if ( !selector ) return _( this.parentElement );
@@ -124,6 +129,7 @@ function qL( input, parent = null ) {
       return parent;
     },
     prev() { return _( this.previousElementSibling ) },
+    next() { return _( this.nextElementSibling ) },
     elements() {
       this.__aloneRequire();
 
@@ -165,7 +171,7 @@ function qL( input, parent = null ) {
 
 
   /** Проверка на входные параметры */
-  if ( parent && parent.qL && parent.__aloneRequire() ) parent = parent.get();
+  if ( parent && parent.qL && parent.__aloneRequire() ) parent = parent.get()
   else if ( !( parent instanceof Element ) ) {
     if ( parent !== null ) throw new Error( 'Родительский элемент не был DOM элементом. Если вы использовали элемент, взятый с помощью qL убедитесь что получили конкретный DOM элемент' );
     parent = document;
@@ -173,8 +179,8 @@ function qL( input, parent = null ) {
 
   if ( input && input.qL === true ) return input;
 
-  if ( typeof input === 'string' ) queryLight.__elements = Array.from( parent.querySelectorAll( input ) );
-  else if ( input instanceof Element || input instanceof Window || input instanceof Document ) queryLight.__elements = [ input ];
+  if ( typeof input === 'string' ) queryLight.__elements = Array.from( parent.querySelectorAll( input ) )
+  else if ( input instanceof Element || input instanceof Window || input instanceof Document ) queryLight.__elements = [ input ]
   else return null;
   if ( queryLight.len() === 0 ) return null;
 
@@ -188,7 +194,7 @@ function qL( input, parent = null ) {
         target = target.get();
         let gotten = Reflect.get( target, prop );
 
-        if ( typeof gotten === 'function' ) return gotten.bind( target );
+        if ( typeof gotten === 'function' ) return gotten.bind( target )
         else return gotten;
       }
 
