@@ -5,7 +5,7 @@
  *
  * Author: Alexandr Shamanin (@slpAkkie)
  * Version: 1.0.4
- * File Version: 1.0.13
+ * File Version: 1.0.14
 */
 
 
@@ -156,6 +156,20 @@ function qL( input, parent = null ) {
       if ( withGETQuery && this.__aloneRequire() ) return { GETQuery: GETQueryFrom( formsData[ 0 ] ), formData: formsData[ 0 ] };
       return formsData.length > 1 ? formsData : ( formsData.length === 1 ? formsData[ 0 ] : null );
     },
+    equalTo( element ) {
+      this.__aloneRequire();
+
+      return this.get() === ( element.ql ? element.get() : element );
+    },
+    inCollection( element ) {
+      inCollection = false;
+
+      this.each( el => {
+        if ( el.equalTo( element ) ) inCollection = true;
+      } );
+
+      return inCollection;
+    },
 
 
 
@@ -163,6 +177,7 @@ function qL( input, parent = null ) {
     __aloneRequire() { if ( this.len() > 1 ) throw new Error( `Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение` ); return true },
     __push( element ) {
       ( element instanceof Element || element.qL )
+        && !this.inCollection( element )
         && this.__elements.push( element.qL ? element.get() : element );
       return this
     },
