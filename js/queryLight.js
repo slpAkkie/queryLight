@@ -4,8 +4,8 @@
  * Скрипты предоставлены для queryLight (ql)
  *
  * Author: Alexandr Shamanin (@slpAkkie)
- * Version: 1.0.4
- * File Version: 1.0.14
+ * Version: 1.0.5
+ * File Version: 1.0.15
 */
 
 
@@ -39,9 +39,18 @@ function qL( input, parent = null ) {
     removeClass( classString ) { this.each( el => el.classList.remove( classString ) ); return this },
     toggleClass( classString ) { this.each( el => _( el ).hasClass( classString ) ? _( el ).removeClass( classString ) : _( el ).addClass( classString ) ) },
     hasClass( classString ) { return this.__elements.some( el => el.classList.contains( classString ) ) },
-    on( eventName, callback ) {
-      this.each( function ( el ) { el.addEventListener( eventName, callback.bind( _( this ) ) ) } );
-
+    on( eventName, callback, alias = null ) {
+      this.each( function ( el ) {
+        let handler = alias ? ( el[ `Handler_${alias}` ] = callback.bind( _( this ) ) ) : callback.bind( _( this ) );
+        el.addEventListener( eventName, handler );
+      } );
+      return this
+    },
+    removeOn( eventName, alias ) {
+      this.each( function ( el ) {
+        let handler = el.get()[ `Handler_${alias}` ] || null;
+        if ( handler !== null ) el.removeEventListener( eventName, handler );
+      } );
       return this
     },
     each( callback ) { this.__elements.forEach( ( el, i ) => callback.call( _( el ), _( el ), i ) ); return this },
