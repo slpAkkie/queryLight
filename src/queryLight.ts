@@ -9,151 +9,105 @@
 
 
 
-interface qLCollection extends Array<Node> { }
+//
+interface qlWrapper { [key: string]: any }
+//
+type qlElement = HTMLElement | HTMLDocument
+//
+type qlCommonElement = HTMLElement | qlWrapper
+//
+type qlCollection = Array<qlElement>
+//
+type qlInput = string | qlElement | qlWrapper
 
 
 
 
 
-interface qLWrapper {
-  [key: string]: any
-}
-
-
-
-
-
-/**
- * @class
- */
-class qLWrapper {
+//
+class qlWrapper {
 
   /**
-   * Find elements in this one
-   *
-   * @param {qLWrapper|Node} input
-   * @returns {qLWrapper}
+   * @property {qlCollection}
    */
-  _(input: qLWrapper | Node): qLWrapper { return qL(input, this) }
+  #entries: qlCollection
+
+  constructor(elements) { this.#entries = elements }
 
   /**
-   * Add class to the elements
-   *
-   * @param {string} classString
-   * @returns {qLWrapper}
+   * @param {qlInput} input
+   * @returns {qlWrapper}
    */
-  addClass(classString: string): qLWrapper {
-    this.each(el => el.classList.add(classString));
-
-    return this
-  }
+  child(input: qlInput): qlWrapper { return q(input, this) }
 
   /**
-   * Remove class from the elements
-   *
-   * @param {string} classString
-   * @returns {qLWrapper}
+   * @param {string} value
+   * @returns {qlWrapper}
    */
-  removeClass(classString: string): qLWrapper {
-    this.each(el => el.classList.remove(classString));
-
-    return this
-  }
+  addClass(value: string): qlWrapper { return this.each(i => i.classList.add(value)) }
 
   /**
-   * Toggle element's class
-   *
-   * @param {string} classString
-   * @returns {qLWrapper}
+   * @param {string} value
+   * @returns {qlWrapper}
    */
-  toggleClass(classString: string): qLWrapper {
-    this.each(el => qL(el).hasClass(classString) ? qL(el).removeClass(classString) : qL(el).addClass(classString))
-
-    return this
-  }
+  removeClass(value: string): qlWrapper { return this.each(i => i.classList.remove(value)) }
 
   /**
-   * Check if at least one element has class
-   *
-   * @param {string} classString
-   * @returns {qLWrapper}
+   * @param {string} value
+   * @returns {qlWrapper}
    */
-  hasClass(classString: string): boolean { return this.__elements.some(el => (<HTMLElement>el).classList.contains(classString)) }
+  toggleClass(value: string): qlWrapper { return this.each(i => i.hasClass(value) ? i.removeClass(value) : i.addClass(value)) }
 
   /**
-   * Add event listener to the elements
-   *
+   * @param {string} value
+   * @returns {qlWrapper}
+   */
+  hasClass(value: string): boolean { return this.#entries.every(i => (<HTMLElement>i).classList.contains(value)) }
+
+  /**
    * @param {string} eventName
    * @param {Function} callback
-   * @param {string} alias
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  on(eventName, callback, alias = null): qLWrapper {
-    this.each(function (el) {
-      let handler = alias ? (el[`Handler_${alias}`] = callback.bind(qL(this))) : callback.bind(qL(this));
-      el.addEventListener(eventName, handler);
-    });
-
-    return this
-  }
+  on(eventName, callback): qlWrapper { return this.each(i => (<HTMLElement>i).addEventListener(eventName, callback)) }
 
   /**
-   * Remove event handler from the elements
-   *
-   * @param {string} eventName
-   * @param {string} alias
-   * @returns {qLWrapper}
-   */
-  removeOn(eventName: string, alias: string): qLWrapper {
-    this.each(function (el) {
-      let handler = el.get()[`Handler_${alias}`] || null;
-      if (handler !== null) el.removeEventListener(eventName, handler);
-    });
-
-    return this
-  }
-
-  /**
-   * Exec callback at each of the elements
-   *
    * @param {Function} callback
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  each(callback: Function): qLWrapper {
-    this.__elements.forEach((el, i) => callback.call(qL(el), qL(el), i));
+  each(callback: Function): qlWrapper {
+    this.#entries.forEach((el, i) => callback.call(q(el), q(el), i))
 
     return this
   }
 
+  // The methods below this comment need refactoring
+
   /**
-   * Insert element before
-   *
-   * @param {qLWrapper | Node} sibling
-   * @returns {qLWrapper | Node}
+   * @param {qlCommonElement} sibling
+   * @returns {qlCommonElement}
    */
-  insertBefore(sibling: qLWrapper | Node): qLWrapper | Node {
-    this.__aloneRequire();
+  insertBefore(sibling: qlCommonElement): qlCommonElement {
+    this.unambiguityRequire()
 
-    if (sibling instanceof qLWrapper) {
-      let parent = this.parent().get();
+    if (sibling instanceof qlWrapper) {
+      let parent = this.parent().get()
 
-      sibling.each(ch => parent.insertBefore(ch.get(), <Node>this.get()));
-    } else this.parent().get().insertBefore(sibling, <Node>this.get());
+      sibling.each(ch => parent.insertBefore(ch.get(), <HTMLElement>this.get()))
+    } else this.parent().get().insertBefore(sibling, <HTMLElement>this.get())
 
     return sibling
   }
 
   /**
-   * Insert element after
-   *
-   * @param {qLWrapper | Node} sibling
-   * @returns {qLWrapper | Node}
+   * @param {qlCommonElement} sibling
+   * @returns {qlCommonElement}
    */
-  insertAfter(sibling: qLWrapper | Node): qLWrapper | Node {
-    let nextSibling = qL(this.nextElementSibling);
+  insertAfter(sibling: qlCommonElement): qlCommonElement {
+    let nextSibling = q(this.nextElementSibling)
     nextSibling
       ? nextSibling.insertBefore(sibling)
-      : this.parent().insert(sibling);
+      : this.parent().insert(sibling)
 
     return sibling
   }
@@ -161,19 +115,19 @@ class qLWrapper {
   /**
    * Insert child into the elements
    *
-   * @param {qLWrapper | Node} sibling
-   * @returns {qLWrapper | Node}
+   * @param {qlWrapper | HTMLElement} sibling
+   * @returns {qlWrapper | HTMLElement}
    */
-  insert(child: qLWrapper | Node, multiInsert: boolean = false): qLWrapper | Node {
-    !(child instanceof qLWrapper) && (child = qL(child));
+  insert(child: qlWrapper | HTMLElement, multiInsert: boolean = false): qlWrapper | HTMLElement {
+    !(child instanceof qlWrapper) && (child = q(child))
 
     if (multiInsert) {
-      this.each((el: Node) => (<qLWrapper>child).each((ch: qLWrapper) => el.appendChild(ch.get().cloneNode(true))));
+      this.each((el: HTMLElement) => (<qlWrapper>child).each((ch: qlWrapper) => el.appendChild(ch.get().cloneNode(true))))
 
       return this
     } else {
-      this.__aloneRequire();
-      child.each(ch => this.appendChild(ch.get()));
+      this.unambiguityRequire()
+      child.each(ch => this.appendChild(ch.get()))
 
       return child
     }
@@ -182,20 +136,20 @@ class qLWrapper {
   /**
    * Insert child into the elements at the last position
    *
-   * @param {qLWrapper | Node} sibling
+   * @param {qlWrapper | HTMLElement} sibling
    * @param {boolean} multiInsert
-   * @returns {qLWrapper | Node}
+   * @returns {qlWrapper | HTMLElement}
    */
-  insertFirst(child: qLWrapper | Node, multiInsert: boolean = false): qLWrapper | Node {
-    !(child instanceof qLWrapper) && (child = qL(child));
+  insertFirst(child: qlWrapper | HTMLElement, multiInsert: boolean = false): qlWrapper | HTMLElement {
+    !(child instanceof qlWrapper) && (child = q(child))
 
     if (multiInsert) {
-      this.each(el => (<qLWrapper>child).each(ch => qL(el.firstElementChild)?.insertBefore(ch.get().cloneNode(true)) || el.insert(ch)));
+      this.each(el => (<qlWrapper>child).each(ch => q(el.firstElementChild)?.insertBefore(ch.get().cloneHTMLElement(true)) || el.insert(ch)))
 
       return this
     } else {
-      this.__aloneRequire();
-      child.each(ch => qL(this.firstElementChild)?.insertBefore(ch.get()) || this.insert(ch));
+      this.unambiguityRequire()
+      child.each(ch => q(this.firstElementChild)?.insertBefore(ch.get()) || this.insert(ch))
 
       return child
     }
@@ -204,11 +158,11 @@ class qLWrapper {
   /**
    * Replace element with another one
    *
-   * @param {qLWrapper | Node} newElement
-   * @returns {qLWrapper | Node}
+   * @param {qlWrapper | HTMLElement} newElement
+   * @returns {qlWrapper | HTMLElement}
    */
-  replace(newElement: qLWrapper | Node): qLWrapper | Node {
-    this.replaceWith(newElement instanceof qLWrapper ? newElement.get() : newElement);
+  replace(newElement: qlWrapper | HTMLElement): qlWrapper | HTMLElement {
+    this.replaceWith(newElement instanceof qlWrapper ? newElement.get() : newElement)
 
     return newElement
   }
@@ -216,25 +170,26 @@ class qLWrapper {
   /**
    * Clear elements entry
    *
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  clear(): qLWrapper {
-    this.each(el => el.innerHTML = '');
+  clear(): qlWrapper {
+    this.each(el => el.innerHTML = '')
 
     return this
   }
 
   /**
-   * Get specified elements from qLWrapper
+   * Get specified elements from qlWrapper
    *
    * @param {number} index
    * @param {boolean} as_qL
-   * @returns {qLWrapper | Node}
+   * @returns {qlWrapper | HTMLElement}
    */
-  get(index: number = null, as_qL: boolean = false): qLWrapper | Node {
-    let el = (index === null) ? this.__elements[0] : this.__elements[index];
+  get(index: number = null, as_qL: boolean = false): qlElement | qlWrapper {
+    let el: qlElement = (index === null) ? this.#entries[0] : this.#entries[index]
 
-    return as_qL ? qL(el) : el
+    if (el) return as_qL ? q(el) : el
+    else return null
   }
 
   /**
@@ -258,9 +213,9 @@ class qLWrapper {
    * @returns {string}
    */
   text(value: string = null): string {
-    if (value !== null) this.each(el => el.innerText = value);
+    if (value !== null) this.each(el => el.innerText = value)
 
-    return value !== null ? value : this.innerText;
+    return value !== null ? value : this.innerText
   }
 
   /**
@@ -270,9 +225,9 @@ class qLWrapper {
    * @returns {string}
    */
   val(val: string = null): string {
-    val && (this.value = val);
+    val && (this.value = val)
 
-    return this.value;
+    return this.value
   }
 
   /**
@@ -280,58 +235,58 @@ class qLWrapper {
    *
    * @returns {number}
    */
-  len(): number { return this.__elements.length }
+  len(): number { return this.#entries.length }
 
   /**
    * Get element parent
    *
    * @param {string} selector
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  parent(selector: string = null): qLWrapper {
-    if (!selector) return qL(this.parentElement);
+  parent(selector: string = null): qlWrapper {
+    if (!selector) return q(this.parentElement)
 
-    this.__aloneRequire();
-    let parent = this.parent();
+    this.unambiguityRequire()
+    let parent = this.parent()
     while (!parent.matches(selector)) {
-      if (parent.matches(':root')) return null;
+      if (parent.matches(':root')) return null
 
-      parent = parent.parent();
+      parent = parent.parent()
     }
 
-    return parent;
+    return parent
   }
 
   /**
    * Get previous element for this one
    *
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  prev(): qLWrapper { return qL(this.previousElementSibling) }
+  prev(): qlWrapper { return q(this.previousElementSibling) }
 
   /**
    * Get next element for this one
    *
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  next(): qLWrapper { return qL(this.nextElementSibling) }
+  next(): qlWrapper { return q(this.nextElementSibling) }
 
   /**
    * Get form elements
    *
-   * @returns {qLWrapper}
+   * @returns {qlWrapper}
    */
-  elements(): qLWrapper {
-    this.__aloneRequire();
+  elements(): qlWrapper {
+    this.unambiguityRequire()
 
-    const form = <HTMLFormElement>this.get();
-    let elements = null;
+    const form = <HTMLFormElement>this.get()
+    let elements = null
 
     for (let key in form.elements)
       if (form.elements.hasOwnProperty(key) && Number.isNaN(parseInt(key)))
-        elements ? elements.__push(form.elements[key]) : (elements = qL(form.elements[key]));
+        elements ? elements.pushElement(form.elements[key]) : (elements = q(<qlInput>form.elements[key]))
 
-    return elements;
+    return elements
   }
 
   /**
@@ -340,43 +295,43 @@ class qLWrapper {
    * @returns {Object}
    */
   formData(): Object {
-    this.__aloneRequire();
+    this.unambiguityRequire()
 
-    let form: qLWrapper = <qLWrapper>this.get(0, true)
-    let formData = new Object();
+    let form: qlWrapper = <qlWrapper>this.get(0, true)
+    let formData = new Object()
 
-    if (!(form.get() instanceof HTMLFormElement)) throw new Error('Элемент не является формой');
-    form.elements().each(el => formData[el.name] = el.value);
+    if (!(form.get() instanceof HTMLFormElement)) throw new Error('Элемент не является формой')
+    form.elements().each(el => formData[el.name] = el.value)
 
-    return formData;
+    return formData
   }
 
   /**
    * Check if element equals to the selected one
    *
-   * @param {qLWrapper | Node} element
+   * @param {qlWrapper | HTMLElement} element
    * @returns {boolean}
    */
-  equalTo(element: qLWrapper | Node): boolean {
-    this.__aloneRequire();
+  equalTo(element: qlWrapper | HTMLElement): boolean {
+    this.unambiguityRequire()
 
-    return this.get() === (element instanceof qLWrapper ? <Node>element.get() : <Node>element);
+    return this.get() === (element instanceof qlWrapper ? <HTMLElement>element.get() : <HTMLElement>element)
   }
 
   /**
    * Check if the element into selected collection
    *
-   * @param {qLWrapper | Node} element
+   * @param {qlWrapper | HTMLElement} element
    * @returns {boolean}
    */
-  inCollection(element: qLWrapper | Node): boolean {
-    let inCollection = false;
+  inCollection(element: qlWrapper | HTMLElement): boolean {
+    let inCollection = false
 
     this.each(el => {
-      if (el.equalTo(element)) inCollection = true;
-    });
+      if (el.equalTo(element)) inCollection = true
+    })
 
-    return inCollection;
+    return inCollection
   }
 
 
@@ -387,9 +342,9 @@ class qLWrapper {
    * @throws {Error}
    * @returns {boolean}
    */
-  __aloneRequire(): boolean {
+  unambiguityRequire(): boolean {
     if (this.len() > 1)
-      throw new Error(`Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение`);
+      throw new Error(`Коллекция состоит из ${this.len()} элементов. Я не понимаю для какого элемента вы хотите получить значение`)
 
     return true
   }
@@ -397,78 +352,67 @@ class qLWrapper {
   /**
    * Push a new element into the collection
    *
-   * @param {qLWrapper | Node} element
-   * @returns {qLWrapper}
+   * @param {qlWrapper | HTMLElement} element
+   * @returns {qlWrapper}
    */
-  __push(element: qLWrapper | Node): qLWrapper {
-    (element instanceof Node || element instanceof qLWrapper)
+  pushElement(element: qlWrapper | HTMLElement): qlWrapper {
+    (element instanceof HTMLElement || element instanceof qlWrapper)
       && !this.inCollection(element)
-      && this.__elements.push(element instanceof qLWrapper ? <Node>element.get() : <Node>element);
+      && this.#entries.push(element instanceof qlWrapper ? <HTMLElement>element.get() : <HTMLElement>element)
 
     return this
   }
 
-
-
-  /**
-   * Elements collection
-   *
-   * @property {qLCollection}
-   */
-  __elements: qLCollection
 }
 
+// The methods above this comment need refactoring
 
 
 
 
-function qL(input: qLWrapper | Node | Function, parent: qLWrapper | Node = null): qLWrapper {
 
-  if (typeof input === 'function') { qL(document).on('DOMContentLoaded', input); return; }
+/**
+ * Wrap elements with qlWrapper
+ *
+ * @param {qlInput | Function} input
+ * @param {qlInput} parent
+ * @returns {qlWrapper}
+ */
+function q(input: qlInput | Function, parent?: qlInput): qlWrapper {
 
+  if (input instanceof Function) return q(document).on('DOMContentLoaded', input)
+  else if (input instanceof qlWrapper) return input
 
-
-  let queryLight = new qLWrapper();
-
-
-
-  if (parent && parent instanceof qLWrapper && parent.__aloneRequire()) parent = parent.get()
-  else if (!(parent instanceof Element)) {
-    if (parent !== null) throw new Error('Родительский элемент не был DOM элементом. Если вы использовали элемент, взятый с помощью qL убедитесь что получили конкретный DOM элемент');
-    parent = document;
-  }
-
-  if (input && input instanceof qLWrapper) return input;
-
-  if (typeof input === 'string') queryLight.__elements = Array.from((<HTMLElement>parent).querySelectorAll(input))
-  else if (input instanceof Element || input instanceof Window || input instanceof Document) queryLight.__elements = [<Node>input]
-  else return null;
-  if (queryLight.len() === 0) return null;
+  parent = q(parent || document)
+  if (parent.len() !== 1) throw new Error('There are several elements into the qlWrapper')
+  parent = <qlElement>parent.get()
 
 
 
-  return new Proxy(queryLight, {
+  let selected = []
+
+  if (typeof input === 'string') selected = [...parent.querySelectorAll(input)]
+  else if (input instanceof HTMLElement || input instanceof Window || input instanceof HTMLDocument) selected = [<qlElement>input]
+
+  if (selected.length === 0) return null
+
+
+
+  return new Proxy(new qlWrapper(selected), {
     get(target, prop, receiver) {
-      if (!(prop in target)) {
-        target.__aloneRequire();
-        const t = target.get();
-        let gotten = Reflect.get(t, prop);
+      if (prop in target) return Reflect.get(target, prop, receiver)
 
-        if (typeof gotten === 'function') return gotten.bind(t)
-        else return gotten;
-      }
+      target.unambiguityRequire()
+      let gotten = Reflect.get(target.get(), prop)
 
-      return Reflect.get(target, prop, receiver);
+      return typeof gotten === 'function' ? gotten.bind(target.get()) : gotten
     },
 
     set(target, name, val) {
-      if (!(name in target)) {
-        target.__aloneRequire();
-        const t = target.get();
-        return Reflect.set(t, name, val);
-      }
+      if (name in target) return Reflect.set(target, name, val)
 
-      return Reflect.set(target, name, val);
+      target.unambiguityRequire()
+      return Reflect.set(target.get(), name, val)
     }
   })
 
