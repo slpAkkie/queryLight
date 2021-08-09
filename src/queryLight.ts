@@ -2,7 +2,7 @@
  * @fileOverview Lightweight module for DOM manipulations
  *
  * @author Alexandr Shamanin (slpAkkie)
- * @version 2.0.0
+ * @version 2.0.1
  */
 
 
@@ -30,9 +30,26 @@ class qlWrapper {
   /**
    * @property {qlCollection}
    */
-  #entries: qlCollection
+  _entries: qlCollection
 
-  constructor(elements) { this.#entries = elements }
+  get collection() { return this._entries }
+
+  setCollection(value: Array<qlInput>) {
+    if (value instanceof Array) {
+      value.forEach(i => {
+        if (typeof i === 'string' || i instanceof Node || i instanceof qlWrapper)
+          this.pushElement(i instanceof qlWrapper ? i.unambiguityRequire().get() : i)
+
+        throw new Error('qlWrapper может содержать только DOM узлы')
+      })
+
+      return this
+    }
+
+    throw new Error('Коллекция должна быть массивом')
+  }
+
+  constructor(elements) { this._entries = elements }
 
   /**
    * TODO: Update to find in several elements
@@ -64,7 +81,7 @@ class qlWrapper {
    * @param {string} value
    * @returns {qlWrapper}
    */
-  hasClass(value: string): boolean { return this.#entries.every(i => (<HTMLElement>i).classList.contains(value)) }
+  hasClass(value: string): boolean { return this.collection.every(i => (<HTMLElement>i).classList.contains(value)) }
 
   /**
    * @param {string} eventName
@@ -78,7 +95,7 @@ class qlWrapper {
    * @returns {qlWrapper}
    */
   each(callback: Function): qlWrapper {
-    this.#entries.forEach((el, i) => callback.call(q(el), q(el), i))
+    this.collection.forEach((el, i) => callback.call(q(el), q(el), i))
 
     return this
   }
@@ -109,10 +126,8 @@ class qlWrapper {
    * @returns {qlCommonElement}
    */
   insert(child: qlCommonElement): qlCommonElement {
-    this.unambiguityRequire()
-
     child = q(child)
-    child.each(i => this.appendChild(i.get()))
+    child.each(i => this.unambiguityRequire().appendChild(i.get()))
 
     return child
   }
@@ -143,7 +158,7 @@ class qlWrapper {
    * @param {boolean} wrap
    * @returns {qlElement | qlWrapper}
    */
-  get(index: number = 0, wrap: boolean = false): qlElement | qlWrapper { return (wrap ? q(this.#entries[index]) : this.#entries[index]) || null }
+  get(index: number = 0, wrap: boolean = false): qlElement | qlWrapper { return wrap ? q(this.collection[index]) : this.collection[index] || null }
 
   /**
    * @returns {number}
@@ -160,12 +175,18 @@ class qlWrapper {
    * @param {string} value
    * @returns {string}
    */
+  html(value: string = null): string { return typeof value === 'string' && this.each(i => i.innerHTML = value) ? value : this.innerHTML }
+
+  /**
+   * @param {string} value
+   * @returns {string}
+   */
   val(value: string = null): string { return typeof value === 'string' && this.each(i => i.value = value) ? value : this.value }
 
   /**
    * @returns {number}
    */
-  count(): number { return this.#entries.length }
+  count(): number { return this.collection.length }
 
   /**
    * @param {string} selector
@@ -196,7 +217,7 @@ class qlWrapper {
   /**
    * @returns {Object}
    */
-  formData(): Object { return (<Array<HTMLInputElement>>this.elems().all()).reduce((carry, i) => Object.assign(carry, { [i.name]: i.value }), {}) }
+  formData(): Object { return (<Array<HTMLInputElement>>this.elems()?.collection || []).reduce((carry, i) => i.name ? Object.assign(carry, { [i.name]: i.value }) : carry, {}) }
 
   /**
    * @param {qlCommonElement} element
@@ -208,7 +229,7 @@ class qlWrapper {
    * @param {qlCommonElement} element
    * @returns {boolean}
    */
-  inCollection(element: qlCommonElement): boolean { return this.all().some(i => q(i).equalTo(element)) }
+  inCollection(element: qlCommonElement): boolean { return this.collection.some(i => q(i).equalTo(element)) }
 
 
 
@@ -226,16 +247,11 @@ class qlWrapper {
    * @param {qlInput} element
    * @returns {qlWrapper}
    */
-  pushElement(element: qlInput): qlWrapper {
-    if (element = q(element)) this.inCollection(element) || this.#entries.push(<qlElement>element.get())
+  pushElement(...elements: qlInput[]): qlWrapper {
+    elements.forEach(i => { if (i = q(i)) this.inCollection(i) || this._entries.push(<qlElement>i.get()) })
 
     return this
   }
-
-  /**
-   * @returns {qlCollection}
-   */
-  all(): qlCollection { return this.#entries }
 
 }
 
@@ -253,16 +269,18 @@ export default function q(input: qlInput | Function, parent?: qlInput): qlWrappe
   if (input instanceof Function) return q(document).on('DOMContentLoaded', input)
   else if (input instanceof qlWrapper) return input
 
-  parent = q(parent || document)
-  if (parent.count() !== 1) throw new Error('There are several elements into the qlWrapper')
-  parent = <qlElement>parent.get()
+  if (!(input instanceof Document)) {
+    parent = q(parent || document)
+    if (parent.count() !== 1) throw new Error('There are several elements into the qlWrapper')
+    parent = <qlElement>parent.get()
+  }
 
 
 
   let selected = []
 
-  if (typeof input === 'string') selected = [...parent.querySelectorAll(input)]
-  else if (input instanceof HTMLElement || input instanceof Window || input instanceof HTMLDocument) selected = [<qlElement>input]
+  if (typeof input === 'string') selected = [...(<qlElement>parent).querySelectorAll(input)]
+  else if (input instanceof HTMLElement || input instanceof Window || input instanceof Document) selected = [<qlElement>input]
   else if (input instanceof Array) selected = input
 
   if (selected.length === 0) return null
@@ -273,17 +291,17 @@ export default function q(input: qlInput | Function, parent?: qlInput): qlWrappe
     get(target, prop, receiver) {
       if (prop in target) return Reflect.get(target, prop, receiver)
 
-      target.unambiguityRequire()
-      let gotten = Reflect.get(target.get(), prop, receiver)
+      let gotten = Reflect.get(target.unambiguityRequire().get(), prop)
 
-      return typeof gotten === 'function' ? gotten.bind(target.get()) : gotten instanceof Node ? q(<qlInput>gotten) : gotten
+      return typeof gotten === 'function'
+        ? gotten.bind(target.get())
+        : gotten instanceof Node ? q(<qlInput>gotten) : gotten
     },
 
     set(target, name, val) {
-      if (name in target) return Reflect.set(target, name, val)
-
-      target.unambiguityRequire()
-      return Reflect.set(target.get(), name, val)
+      return name in target
+        ? Reflect.set(target, name, val)
+        : Reflect.set(target.unambiguityRequire().get(), name, val)
     }
   })
 

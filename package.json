@@ -1,6 +1,6 @@
 {
   "name": "query-light",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Lightweight module for DOM manipulations",
   "scripts": {
     "build": "gulp build",
