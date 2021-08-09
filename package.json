@@ -1,0 +1,29 @@
+{
+  "name": "query-light",
+  "version": "2.0.0",
+  "description": "Lightweight module for DOM manipulations",
+  "scripts": {
+    "build": "gulp build",
+    "watch": "gulp watch",
+    "dev": "npm run build && npm run watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slpAkkie/queryLight.git"
+  },
+  "author": "Alexandr Shamanin (@slpAkkie)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/slpAkkie/queryLight/issues"
+  },
+  "homepage": "https://github.com/slpAkkie/queryLight#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0",
+    "gulp-rename": "^2.0.0",
+    "gulp-sourcemaps": "^3.0.0",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "gulp-uglify": "^3.0.2",
+    "typescript": "^4.3.5"
+  }
+}
