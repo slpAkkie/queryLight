@@ -1,15 +1,15 @@
 # queryLight
 
-Простой модуль для манипуляции DOM
+Simple module for DOM manipulation
 
-## Автор
+## Author
 
 Alexandr Shamanin (@slpAkkie)
 
-## Версия
+## Version
 
 `2.0.1`
 
-## Лицензия
+## License
 
 MIT
