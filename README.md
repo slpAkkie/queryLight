@@ -1,15 +1,17 @@
-## queryLight
+# queryLight
 
-Simple module for DOM manipulation. Clone a jQuery kinda.
+Небольшая библиотека для манипулирования DOM
 
-## Author
+> Своеобразная копия `jQuery`
+
+## Автор
 
 Alexandr Shamanin (@slpAkkie)
 
-## Version
+## Версия
 
 2.0.1
 
-## License
+## Лицензия
 
 MIT
